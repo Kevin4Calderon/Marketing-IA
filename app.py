@@ -41,7 +41,12 @@ def index():
             if file.filename == "":
                 return "Error: No se seleccionó archivo"
 
-            df = pd.read_csv(file)
+            # 🔥 FIX ENCODING
+            try:
+                df = pd.read_csv(file, encoding='utf-8')
+            except UnicodeDecodeError:
+                file.seek(0)
+                df = pd.read_csv(file, encoding='latin-1')
 
             # 🔥 SOLO COLUMNAS NUMÉRICAS
             numeric_df = df.select_dtypes(include='number').dropna()
@@ -90,7 +95,6 @@ def index():
             )
             clusters_html = clusters.to_html(full_html=False)
 
-            # ✅ IMPORTANTE: render_template_string
             return render_template_string(
                 HTML,
                 heatmap=heatmap_html,
@@ -102,7 +106,6 @@ def index():
         except Exception as e:
             return f"<h2>Error interno:</h2><pre>{str(e)}</pre>"
 
-    # ✅ IMPORTANTE: también aquí
     return render_template_string(HTML)
 
 
