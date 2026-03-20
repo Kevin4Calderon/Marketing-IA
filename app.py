@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string, redirect, url_for
+from flask import Flask, request, redirect
 import pandas as pd
 import plotly.express as px
 import plotly.figure_factory as ff
@@ -7,7 +7,6 @@ from sklearn.cluster import KMeans
 
 app = Flask(__name__)
 
-# 🔹 variable global simple (para práctica)
 df_global = None
 
 
@@ -44,15 +43,16 @@ def index():
 @app.route("/dashboard")
 def dashboard():
     global df_global
-    df = df_global
 
+    if df_global is None:
+        return "<h2>Primero sube un dataset</h2><a href='/'>Volver</a>"
+
+    df = df_global
     numeric_df = df.select_dtypes(include="number").dropna()
 
-    # 🔹 Scatter matrix
     scatter = px.scatter_matrix(numeric_df.iloc[:, :8])
     scatter_html = scatter.to_html(full_html=False)
 
-    # 🔹 Línea (sales)
     if "SALES" in df.columns:
         df_group = df.groupby(df.columns[0]).sum(numeric_only=True)
         line = px.line(x=df_group.index, y=df_group["SALES"], title="Sales")
@@ -74,16 +74,17 @@ def dashboard():
 @app.route("/analisis")
 def analisis():
     global df_global
-    df = df_global
 
+    if df_global is None:
+        return "<h2>Primero sube un dataset</h2><a href='/'>Volver</a>"
+
+    df = df_global
     numeric_df = df.select_dtypes(include="number").dropna()
 
-    # 🔹 Heatmap
     corr = numeric_df.corr()
     heatmap = px.imshow(corr, text_auto=True)
     heatmap_html = heatmap.to_html(full_html=False)
 
-    # 🔹 Distribuciones
     dist_html = ""
     for col in numeric_df.columns[:5]:
         fig = ff.create_distplot([numeric_df[col]], [col])
@@ -101,11 +102,13 @@ def analisis():
 @app.route("/clusters")
 def clusters():
     global df_global
-    df = df_global
 
+    if df_global is None:
+        return "<h2>Primero sube un dataset</h2><a href='/'>Volver</a>"
+
+    df = df_global
     numeric_df = df.select_dtypes(include="number").dropna()
 
-    # 🔹 Elbow method
     scores = []
     r = range(1, 10)
 
@@ -117,7 +120,6 @@ def clusters():
     elbow = px.line(x=list(r), y=scores, title="Elbow Method")
     elbow_html = elbow.to_html(full_html=False)
 
-    # 🔹 Clustering
     kmeans = KMeans(n_clusters=3, n_init=10)
     labels = kmeans.fit_predict(numeric_df)
 
@@ -141,8 +143,11 @@ def clusters():
 @app.route("/pca")
 def pca_view():
     global df_global
-    df = df_global
 
+    if df_global is None:
+        return "<h2>Primero sube un dataset</h2><a href='/'>Volver</a>"
+
+    df = df_global
     numeric_df = df.select_dtypes(include="number").dropna()
 
     pca = PCA(n_components=2)
@@ -161,10 +166,3 @@ def pca_view():
     <a href='/dashboard'>Dashboard</a>
     {html}
     """
-
-
-# ------------------ RUN ------------------
-if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
