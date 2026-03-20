@@ -11,6 +11,69 @@ app = Flask(__name__)
 df_global = None
 
 
+# 🎨 ESTILOS REUTILIZABLES
+BASE_HTML = """
+<style>
+body {{
+    font-family: Arial;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: white;
+    margin: 0;
+    padding: 20px;
+}}
+
+h1 {{
+    text-align: center;
+}}
+
+.nav {{
+    text-align: center;
+    margin-bottom: 20px;
+}}
+
+.nav a {{
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+    padding: 8px 15px;
+    border-radius: 10px;
+    background: #00c6ff;
+    color: black;
+    font-weight: bold;
+}}
+
+.card {{
+    background: white;
+    color: black;
+    padding: 15px;
+    border-radius: 15px;
+    margin: 20px auto;
+    width: 90%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}}
+
+.center {{
+    text-align: center;
+}}
+
+button {{
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background: #00c6ff;
+    font-weight: bold;
+    cursor: pointer;
+}}
+
+input {{
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+}}
+</style>
+"""
+
+
 # ------------------ HOME ------------------
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -31,12 +94,17 @@ def index():
         except Exception as e:
             return str(e)
 
-    return """
-    <h1>Subir dataset</h1>
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="file" required>
-        <button type="submit">Subir</button>
-    </form>
+    return f"""
+    {BASE_HTML}
+    <h1>📊 Subir dataset</h1>
+
+    <div class="card center">
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" required>
+            <br><br>
+            <button type="submit">Subir</button>
+        </form>
+    </div>
     """
 
 
@@ -46,7 +114,7 @@ def dashboard():
     global df_global
 
     if df_global is None:
-        return "<h2>Primero sube un dataset</h2><a href='/'>Volver</a>"
+        return f"{BASE_HTML}<h2>Primero sube un dataset</h2><a href='/'>Volver</a>"
 
     df = df_global
     numeric_df = df.select_dtypes(include="number").dropna()
@@ -62,12 +130,17 @@ def dashboard():
         line_html = "<h3>No hay columna SALES</h3>"
 
     return f"""
-    <h1>Dashboard</h1>
-    <a href='/analisis'>Analisis</a> |
-    <a href='/clusters'>Clusters</a> |
-    <a href='/pca'>PCA</a>
-    {line_html}
-    {scatter_html}
+    {BASE_HTML}
+    <h1>📊 Dashboard</h1>
+
+    <div class="nav">
+        <a href="/analisis">Analisis</a>
+        <a href="/clusters">Clusters</a>
+        <a href="/pca">PCA</a>
+    </div>
+
+    <div class="card">{line_html}</div>
+    <div class="card">{scatter_html}</div>
     """
 
 
@@ -77,7 +150,7 @@ def analisis():
     global df_global
 
     if df_global is None:
-        return "<h2>Primero sube un dataset</h2><a href='/'>Volver</a>"
+        return f"{BASE_HTML}<h2>Primero sube un dataset</h2><a href='/'>Volver</a>"
 
     df = df_global
     numeric_df = df.select_dtypes(include="number").dropna()
@@ -89,12 +162,17 @@ def analisis():
     dist_html = ""
     for col in numeric_df.columns[:5]:
         fig = ff.create_distplot([numeric_df[col]], [col])
-        dist_html += fig.to_html(full_html=False)
+        dist_html += f'<div class="card">{fig.to_html(full_html=False)}</div>'
 
     return f"""
-    <h1>Analisis</h1>
-    <a href='/dashboard'>Dashboard</a>
-    {heatmap_html}
+    {BASE_HTML}
+    <h1>📈 Analisis</h1>
+
+    <div class="nav">
+        <a href="/dashboard">Dashboard</a>
+    </div>
+
+    <div class="card">{heatmap_html}</div>
     {dist_html}
     """
 
@@ -105,7 +183,7 @@ def clusters():
     global df_global
 
     if df_global is None:
-        return "<h2>Primero sube un dataset</h2><a href='/'>Volver</a>"
+        return f"{BASE_HTML}<h2>Primero sube un dataset</h2><a href='/'>Volver</a>"
 
     df = df_global
     numeric_df = df.select_dtypes(include="number").dropna()
@@ -130,12 +208,17 @@ def clusters():
     hist_html = ""
     for col in numeric_df.columns[:3]:
         fig = px.histogram(df_cluster, x=col, color="cluster")
-        hist_html += fig.to_html(full_html=False)
+        hist_html += f'<div class="card">{fig.to_html(full_html=False)}</div>'
 
     return f"""
-    <h1>Clusters</h1>
-    <a href='/dashboard'>Dashboard</a>
-    {elbow_html}
+    {BASE_HTML}
+    <h1>🤖 Clusters</h1>
+
+    <div class="nav">
+        <a href="/dashboard">Dashboard</a>
+    </div>
+
+    <div class="card">{elbow_html}</div>
     {hist_html}
     """
 
@@ -146,7 +229,7 @@ def pca_view():
     global df_global
 
     if df_global is None:
-        return "<h2>Primero sube un dataset</h2><a href='/'>Volver</a>"
+        return f"{BASE_HTML}<h2>Primero sube un dataset</h2><a href='/'>Volver</a>"
 
     df = df_global
     numeric_df = df.select_dtypes(include="number").dropna()
@@ -163,9 +246,14 @@ def pca_view():
     html = fig.to_html(full_html=False)
 
     return f"""
-    <h1>PCA</h1>
-    <a href='/dashboard'>Dashboard</a>
-    {html}
+    {BASE_HTML}
+    <h1>📉 PCA</h1>
+
+    <div class="nav">
+        <a href="/dashboard">Dashboard</a>
+    </div>
+
+    <div class="card">{html}</div>
     """
 
 
