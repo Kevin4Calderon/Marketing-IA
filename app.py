@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.figure_factory as ff
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
+import os
 
 app = Flask(__name__)
 
@@ -166,3 +167,9 @@ def pca_view():
     <a href='/dashboard'>Dashboard</a>
     {html}
     """
+
+
+# ------------------ RUN LOCAL ------------------
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, port=port)
